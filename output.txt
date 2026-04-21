@@ -1,0 +1,1 @@
+The character 'b' appears 3 times in file characters.txt.
