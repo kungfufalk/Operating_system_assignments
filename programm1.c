@@ -48,13 +48,6 @@ int main(int argc, char *argv[])
 
     int count[NUM_PROCESSES];
 
-    /* open file for reading */
-    // if ((file_descriptor_read = open(read_path, O_RDONLY)) == -1)
-    // {
-    //     perror("open failed");
-    //     return 1;
-    // }
-
     /* open file for writing the result */
     if ((file_descriptor_write = open(write_path, O_WRONLY | O_CREAT | O_TRUNC)) == -1)
     {
@@ -122,11 +115,6 @@ int main(int argc, char *argv[])
                     bytes_read++;
                 }
 
-                printf("Hello world, this is the child process:\n"
-                       "\t my pid=%d\n"
-                       "\t parent pid=%d\n",
-                       getpid(), getppid());
-
                 close(fd); // close file
 
                 close(pipes_fd[i][0]);                         // close read end
@@ -134,13 +122,6 @@ int main(int argc, char *argv[])
                 close(pipes_fd[i][1]);                         // close write end
                 exit(EXIT_SUCCESS);
             }
-            // else
-            // {
-            //     printf("This is the parent process:\n"
-            //            "\t my pid=%d\n"
-            //            "\t child pid=%d\n",
-            //            getpid(), original_code_id);
-            // }
         }
 
         // close all write ends of parent
@@ -170,15 +151,13 @@ int main(int argc, char *argv[])
         }
 
         printf("The character %c occurs in total %d times\n", c2c, final_result);
-        // /* close the file for reading */
-        // close(file_descriptor_read);
 
-        // char output[1024];
-        // snprintf(output, sizeof(output), "The character '%c' appears %d times in file %s.\n", c2c, count, argv[1]);
+        char output[1024];
+        snprintf(output, sizeof(output), "The character '%c' appears %d times in file %s.\n", c2c, final_result, argv[1]);
 
-        // write(file_descriptor_write, output, strlen(output));
+        write(file_descriptor_write, output, strlen(output));
         /* close the output file */
-        // close(file_descriptor_write);
+        close(file_descriptor_write);
 
         exit(EXIT_SUCCESS);
         return 0;
