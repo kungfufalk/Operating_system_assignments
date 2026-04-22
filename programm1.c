@@ -18,6 +18,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <errno.h>
+#include <sys/wait.h>
 
 int main(int argc, char *argv[])
 {
@@ -33,11 +34,26 @@ int main(int argc, char *argv[])
     const char *write_path = argv[2];
     char cc, c2c = 'a';
     pid_t child_id;
+    pid_t original_code_id;
 
     /* character to search for (third parameter in command line) */
     c2c = argv[3][0];
 
     int count = 0;
+
+    /* open file for reading */
+    if ((file_descriptor_read = open(read_path, O_RDONLY)) == -1)
+    {
+        perror("open failed");
+        return 1;
+    }
+
+    /* open file for writing the result */
+    if ((file_descriptor_write = open(write_path, O_WRONLY | O_CREAT | O_TRUNC)) == -1)
+    {
+        printf("Problem opening file to write\n");
+        return 1;
+    }
 
     // Two processes are created
     if ((child_id = fork()) < 0)
@@ -50,32 +66,35 @@ int main(int argc, char *argv[])
                "\t my pid=%d\n"
                "\t parent pid=%d\n",
                getpid(), getppid());
-    }
-    else
-    {
-        printf("This is the parent process:\n"
-               "\t my pid=%d\n"
-               "\t child pid=%d\n",
-               getpid(), child_id);
-
-        /* open file for reading */
-        if ((file_descriptor_read = open(read_path, O_RDONLY)) == -1)
-        {
-            perror("open failed");
-            return 1;
-        }
-
-        /* open file for writing the result */
-        if ((file_descriptor_write = open(write_path, O_WRONLY | O_CREAT | O_TRUNC)) == -1)
-        {
-            printf("Problem opening file to write\n");
-            return 1;
-        }
 
         /* count the occurences of the given character */
         while (read(file_descriptor_read, &cc, 1) != 0)
             if (cc == c2c)
                 count++;
+
+        exit(EXIT_SUCCESS);
+    }
+    else
+    {
+        // Second child process is created
+        if ((original_code_id = fork()) < 0)
+        {
+            perror("Fork failed");
+        }
+        // still in the parent process
+        else if (original_code_id == 0)
+        {
+            execv("./original_code.c", argv);
+                }
+        else
+        {
+            wait(NULL);
+
+            printf("This is the parent process:\n"
+                   "\t my pid=%d\n"
+                   "\t child pid=%d\n",
+                   getpid(), original_code_id);
+        }
 
         /* close the file for reading */
         close(file_descriptor_read);
@@ -86,8 +105,7 @@ int main(int argc, char *argv[])
         write(file_descriptor_write, output, strlen(output));
         /* close the output file */
         close(file_descriptor_write);
-    }
 
-    exit(EXIT_SUCCESS);
-    return 0;
-}
+        exit(EXIT_SUCCESS);
+        return 0;
+    }
