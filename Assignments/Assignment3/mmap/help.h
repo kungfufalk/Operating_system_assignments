@@ -21,8 +21,12 @@
 /*
  * Print the given message and exit with a failed status.
  */
-#define die(msg) \
-	do { perror(msg); exit(EXIT_FAILURE); } while (0)
+#define die(msg)            \
+	do                      \
+	{                       \
+		perror(msg);        \
+		exit(EXIT_FAILURE); \
+	} while (0)
 
 /*
  * Retrieve the system's page size.
@@ -55,9 +59,8 @@ void show_va_info(uint64_t va);
  * https://man7.org/linux/man-pages/man5/proc.5.html), as well as the Linux
  * documentation at: https://www.kernel.org/doc/Documentation/vm/pagemap.txt.
  */
-uint64_t get_physical_address(unsigned long virt_addr);
+uint64_t get_physical_address(uint64_t virt_addr);
 
 void press_enter(void);
 
 #endif /* MAP_H */
-

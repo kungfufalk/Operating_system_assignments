@@ -21,14 +21,13 @@
 
 #include "help.h"
 
-#define LINELEN          256
-#define PAGEMAP_PATH     "/proc/self/pagemap"
-#define MAPS_PATH        "/proc/self/maps"
+#define LINELEN 256
+#define PAGEMAP_PATH "/proc/self/pagemap"
+#define MAPS_PATH "/proc/self/maps"
 
-#define PFN_MASK         0x7FFFFFFFFFFFFF
-#define GET_PFN(X)       ((X) & PFN_MASK)
-#define GET_BIT(X, nr)   (((X) >> (nr)) & (uint64_t)1)
-
+#define PFN_MASK 0x7FFFFFFFFFFFFF
+#define GET_PFN(X) ((X) & PFN_MASK)
+#define GET_BIT(X, nr) (((X) >> (nr)) & (uint64_t)1)
 
 /*
  * Retrieve the system's page size.
@@ -57,13 +56,15 @@ void show_maps(void)
 	char line[LINELEN];
 
 	f = fopen(MAPS_PATH, "r");
-	if (!f) {
+	if (!f)
+	{
 		printf("Cannot open " MAPS_PATH ": %s\n", strerror(errno));
 		return;
 	}
 
 	printf("\nVirtual Memory Map of process [%ld]:\n", (long)getpid());
-	while (fgets(line, LINELEN, f) != NULL) {
+	while (fgets(line, LINELEN, f) != NULL)
+	{
 		printf("%s", line);
 	}
 	printf("--------------------------------------------------------\n\n");
@@ -85,19 +86,23 @@ void show_va_info(uint64_t va)
 	uint64_t vm_start, vm_end;
 
 	f = fopen(MAPS_PATH, "r");
-	if (!f) {
+	if (!f)
+	{
 		printf("Cannot open " MAPS_PATH ": %s\n", strerror(errno));
 		return;
 	}
 
-	while (fgets(line, LINELEN, f) != NULL) {
+	while (fgets(line, LINELEN, f) != NULL)
+	{
 		n = sscanf(line, "%lX-%lX", &vm_start, &vm_end);
-		if (n != 2) {
+		if (n != 2)
+		{
 			printf("Invalid line read from %s (6)\n", line);
 			continue;
 		}
 
-		if (va >= vm_start && va < vm_end) {
+		if (va >= vm_start && va < vm_end)
+		{
 			printf("%s", line);
 			goto out;
 		}
@@ -152,8 +157,8 @@ void press_enter(void)
 {
 	char enter = 0;
 
-	while (enter != '\r' && enter != '\n') {
+	while (enter != '\r' && enter != '\n')
+	{
 		enter = getchar();
 	}
 }
-
