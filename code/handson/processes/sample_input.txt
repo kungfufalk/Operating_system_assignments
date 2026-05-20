@@ -1,0 +1,6 @@
+ABCDEFGHIJKLMNOPQRSTUVWXYZ
+0123456789
+abcdefghijklmnopqrstuvwxyz
+This is a shared file offset demo.
+Each child will read a different chunk.
+The order of children is unpredictable.
