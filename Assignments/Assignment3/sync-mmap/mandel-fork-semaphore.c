@@ -4,13 +4,16 @@
  * A program to draw the Mandelbrot Set on a 256-color xterm.
  *
  */
-
+#include <sys/wait.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <assert.h>
 #include <string.h>
 #include <math.h>
 #include <stdlib.h>
+#include <sys/mman.h>
+#include <semaphore.h>
+#include "help.h"
 
 /*TODO header file for m(un)map*/
 
@@ -21,7 +24,7 @@
 /***************************
  * Compile-time parameters *
  ***************************/
-
+sem_t *sems;
 /*
  * Output at the terminal is is x_chars wide by y_chars long
 */
@@ -133,8 +136,14 @@ void *create_shared_memory_area(unsigned int numbytes)
 
 	/* Create a shared, anonymous mapping for this number of pages */
 	/* TODO:  
-		addr = mmap(...)
 	*/
+	addr = mmap(
+		NULL,					// let kernel choose address
+		get_page_size() * pages,				// allocate one page
+		PROT_READ | PROT_WRITE, // readable and writable
+		MAP_SHARED | MAP_ANONYMOUS,
+		-1, // no file descriptor
+		0);
 
 	return addr;
 }
@@ -159,21 +168,62 @@ void destroy_shared_memory_area(void *addr, unsigned int numbytes) {
 	}
 }
 
-int main(void)
+void calculate_lines(int processes, int i)
 {
+	int step = processes;
+	int color_val[x_chars];
+
+	for (int line = i; line < y_chars; line += step)
+	{
+		compute_mandel_line(line, color_val);
+		sem_wait(&sems[i]);
+		output_mandel_line(1, color_val);
+		sem_post(&sems[(i + 1) % step]);
+	}
+
+	return;
+}
+
+int main(int argc, char *argv[])
+{
+
 	int line;
+	int ret;
+	int val;
+	int pid;
+	
+	
+	if (argc < 2)
+	{
+		fprintf(stderr, "Usage: %s <processes>\n", argv[0]);
+		exit(1);
+	}
+	
+	int processes = atoi(argv[1]);
+	sems = create_shared_memory_area(sizeof(sem_t) * processes);
+
+	for (int i = 0; i < processes; i++)
+	{
+		sem_init(&sems[i], 1, (i == 0 ? 1 : 0));
+	}
 
 	xstep = (xmax - xmin) / x_chars;
 	ystep = (ymax - ymin) / y_chars;
 
-	/*
-	 * draw the Mandelbrot Set, one line at a time.
-	 * Output is sent to file descriptor '1', i.e., standard output.
-	 */
-	for (line = 0; line < y_chars; line++) {
-		compute_and_output_mandel_line(1, line);
+	for (int i = 0; i < processes; i++)
+	{
+		pid = fork();
+
+		if (pid == 0) {
+			calculate_lines(processes, i);
+			exit(0);
+		}
+	}
+
+	for (int i = 0; i < processes; i++) {
+		wait(NULL);
 	}
 
 	reset_xterm_color(1);
-	return 0;
+	exit(0);
 }
